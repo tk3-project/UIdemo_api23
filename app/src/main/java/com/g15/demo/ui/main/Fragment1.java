@@ -64,6 +64,10 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
         homeSwitch.setOnCheckedChangeListener(this);
     }
 
+    /**
+     * Checks which of the necessary permissions are granted.
+     * @return A list of permission identifiers that are not granted, but needed.
+     */
     private String[] identifyNeededPermissions() {
         List<String> neededPermissions = new ArrayList<>();
 
@@ -80,12 +84,19 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
         return neededPermissions.toArray(new String[neededPermissions.size()]);
     }
 
+    /**
+     * Checks if all needed permissions are granted.
+     * @return true if all permissions are granted, otherwise false.
+     */
     private boolean checkPermissions() {
         final String[] neededPermissions = identifyNeededPermissions();
 
         return neededPermissions.length == 0;
     }
 
+    /**
+     * Displays a descriptive dialog that prompts the user to grant the necessary permissions.
+     */
     private void showPermissionRequestDialog() {
         final String[] neededPermissions = identifyNeededPermissions();
 
@@ -115,6 +126,10 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
                 .show();
     }
 
+    /**
+     * Request the user to grant the specified permissions.
+     * @param permissions The permissions that should be granted.
+     */
     private void grantPermissions(String[] permissions) {
         if (permissions.length > 0) {
             Log.d(LOG_TAG, "Requesting missing permissions.");
@@ -154,6 +169,9 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
         }
     }
 
+    /**
+     * This method restores the state of the switches to match the stored activation state.
+     */
     private void initializeScenarioActivated() {
         if (scenarios.isScenarioActivated(Scenarios.Scenario.SCENARIO_MUSIC)) {
             musicSwitch.setChecked(true);
@@ -205,14 +223,25 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
         }
     }
 
+    /**
+     * Enable and initialize the tracking of location and activity of the user.
+     */
     private void enableLocationAndActivityTracking() {
         // TODO
     }
 
+    /**
+     * Disable the tracking of location and activity of the user.
+     */
     private void disableLocationAndActivityTracking() {
         // TODO
     }
 
+    /**
+     * This method changes the activation state of a scenario.
+     * @param scenario The scenario to change.
+     * @param scenarioActivated If the scenario should be enabled or disabled.
+     */
     private void setScenarioEnabled(Scenarios.Scenario scenario, boolean scenarioActivated) {
         scenarios.setScenarioEnabled(scenario, scenarioActivated);
     }

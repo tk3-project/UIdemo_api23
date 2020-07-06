@@ -1,5 +1,9 @@
 # Readme
 
+## Changelog
+- store the activation state of the scenarios in the shared preferences and reload on startup
+- prompt the user with a descriptive permission request when a scenario is activated for the first time
+
 ## Change to Dependencies
 
 ```diff
