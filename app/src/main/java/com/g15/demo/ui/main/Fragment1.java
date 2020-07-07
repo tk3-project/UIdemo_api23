@@ -24,6 +24,7 @@ import com.g15.demo.Scenarios;
 import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.g15.demo.Scenarios.SHARED_PREFERENCES_KEY;
@@ -38,6 +39,8 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
     private Scenarios scenarios;
     private Scenarios.Scenario currentTargetScenario;
     private CompoundButton currentTargetSwitch;
+    private List<String> missingPermissions = new ArrayList<>();
+    private int permissionCounter = 0;
 
     @Override
     public View onCreateView(
@@ -120,31 +123,40 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         Log.i(LOG_TAG, "User starts grant permission process.");
-                        grantPermissions(neededPermissions);
+                        missingPermissions = new ArrayList<>(Arrays.asList(neededPermissions));
+                        grantMissingPermission();
                     }
                 })
                 .show();
     }
 
     /**
-     * Request the user to grant the specified permissions.
-     * @param permissions The permissions that should be granted.
+     * Request the user to grant one of the missing permissions.
      */
-    private void grantPermissions(String[] permissions) {
-        if (permissions.length > 0) {
-            Log.d(LOG_TAG, "Requesting missing permissions.");
-            requestPermissions(permissions, 1);
+    private void grantMissingPermission() {
+        if (missingPermissions.size() > 0) {
+            String permission = missingPermissions.remove(0);
+            Log.d(LOG_TAG, "Requesting missing permission: " + permission);
+            requestPermissions(new String[] {permission}, ++permissionCounter);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Boolean allPermissionsGranted = true;
-        for (int i = 0; i < grantResults.length; i++) {
-            allPermissionsGranted = allPermissionsGranted && grantResults[i] == PackageManager.PERMISSION_GRANTED;
-        }
+        boolean permissionGranted = grantResults != null && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED;
 
-        if (allPermissionsGranted) {
+        if (!permissionGranted) {
+            Snackbar.make(getView(), getString(R.string.permission_dialog_canceled), Snackbar.LENGTH_LONG)
+                    .show();
+            Log.w(LOG_TAG, "Necessary permission not granted: " + permissions[0]);
+            missingPermissions = new ArrayList<>();
+        } else if (missingPermissions.size() > 0) {
+            // The permissions have to be requested individually to work on Android 10.
+            String permission = missingPermissions.remove(0);
+            Log.d(LOG_TAG, "Requesting missing permission: " + permission);
+            requestPermissions(new String[] {permission}, ++permissionCounter);
+        } else {
             Log.i(LOG_TAG, "All needed permissions granted.");
             if (currentTargetScenario != null) {
                 Log.i(LOG_TAG, "Activating pending scenario.");
@@ -157,14 +169,6 @@ public class Fragment1 extends Fragment implements CompoundButton.OnCheckedChang
                     enableLocationAndActivityTracking();
                 }
                 currentTargetScenario = null;
-            }
-        } else {
-            Snackbar.make(getView(), getString(R.string.permission_dialog_canceled), Snackbar.LENGTH_LONG)
-                    .show();
-            for (int i = 0; i < permissions.length && i < grantResults.length; i++) {
-                if (grantResults[i] == PackageManager.PERMISSION_DENIED) {
-                    Log.w(LOG_TAG, "Necessary permission not granted: " + permissions[i]);
-                }
             }
         }
     }
