@@ -1,6 +1,7 @@
 package com.g15.demo;
 
 import android.Manifest;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
@@ -8,6 +9,7 @@ import android.location.Location;
 import android.os.Bundle;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -36,6 +38,11 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String ADDRESS_REQUESTED_KEY = "address-request-pending";
     private static final String LOCATION_ADDRESS_KEY = "location-address";
+
+    private static final long UPDATE_INTERVAL = 30000; // 30 sec
+    private static final long FASTEST_UPDATE_INTERVAL = 10000; // 10 sec
+    private static final long MAX_WAIT_TIME = UPDATE_INTERVAL * 4; // 2 min
+    private LocationRequest locationRequest;
 
     /**
      * Provides access to the Fused Location Provider API.
@@ -88,6 +95,34 @@ public class MainActivity extends AppCompatActivity {
         // mAddressRequested to true. As far as the user is concerned, pressing the Fetch Address button
         // immediately kicks off the process of getting the address.
         mAddressRequested = true;
+
+        createLocationRequest();
+        requestLocationUpdates();
+    }
+
+    public void requestLocationUpdates() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG, "Necessary permission to access location is not granted. Location updates cannot be processed.");
+            return;
+        }
+        mFusedLocationClient.requestLocationUpdates(locationRequest, getBackgroundLocationPendingIntent());
+    }
+
+    public void removeLocationUpdates() {
+        mFusedLocationClient.removeLocationUpdates(getBackgroundLocationPendingIntent());
+    }
+
+    private void createLocationRequest() {
+        locationRequest = new LocationRequest()
+                .setInterval(UPDATE_INTERVAL)
+                .setFastestInterval(FASTEST_UPDATE_INTERVAL)
+                .setMaxWaitTime(MAX_WAIT_TIME);
+    }
+
+    private PendingIntent getBackgroundLocationPendingIntent() {
+        Intent intent = new Intent(this, LocationUpdateReceiver.class);
+        return PendingIntent.getBroadcast(
+                this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
     @Override
